@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dual_fr3">
+
+  <!-- FR3 macro -->
+  <xacro:include filename="$(find dual_arm)/config/fr3.urdf.xacro"/>
+
+  <!-- shared args -->
+  <xacro:arg name="hand" default="true"/>
+  <xacro:arg name="ee_id" default="franka_hand"/>
+  <xacro:arg name="use_fake_hardware" default="false"/>
+  <xacro:arg name="fake_sensor_commands" default="false"/>
+  <xacro:arg name="ros2_control" default="true"/>
+  <xacro:arg name="arm_id" default="fr3"/>
+
+  <!-- IMPORTANT: franka_robot.xacro(franka_hand branch) uses $(arg special_connection) -->
+  <xacro:arg name="special_connection" default=""/>
+
+  <!-- per-robot args -->
+  <xacro:arg name="left_robot_ip" default=""/>
+  <xacro:arg name="right_robot_ip" default=""/>
+
+  <!-- base poses -->
+  <xacro:arg name="left_xyz" default="0 -0.5 0"/>
+  <xacro:arg name="left_rpy" default="0 0 0"/>
+  <xacro:arg name="right_xyz" default="0 0.5 0"/>
+  <xacro:arg name="right_rpy" default="0 0 0"/>
+
+  <link name="world"/>
+
+  <joint name="world_to_left_base" type="fixed">
+    <parent link="world"/>
+    <child link="left_base"/>
+    <origin xyz="$(arg left_xyz)" rpy="$(arg left_rpy)"/>
+  </joint>
+
+  <joint name="world_to_right_base" type="fixed">
+    <parent link="world"/>
+    <child link="right_base"/>
+    <origin xyz="$(arg right_xyz)" rpy="$(arg right_rpy)"/>
+  </joint>
+
+  <!-- left -->
+  <xacro:fr3
+    arm_id="$(arg arm_id)"
+    arm_prefix="left"
+    hand="$(arg hand)"
+    ee_id="$(arg ee_id)"
+    special_connection="$(arg special_connection)"
+    ros2_control="$(arg ros2_control)"
+    robot_ip="$(arg left_robot_ip)"
+    use_fake_hardware="$(arg use_fake_hardware)"
+    fake_sensor_commands="$(arg fake_sensor_commands)"
+    connected_to="left_base"
+    xyz="0 0 0"
+    rpy="0 0 0"
+  />
+
+  <!-- right -->
+  <xacro:fr3
+    arm_id="$(arg arm_id)"
+    arm_prefix="right"
+    hand="$(arg hand)"
+    ee_id="$(arg ee_id)"
+    special_connection="$(arg special_connection)"
+    ros2_control="$(arg ros2_control)"
+    robot_ip="$(arg right_robot_ip)"
+    use_fake_hardware="$(arg use_fake_hardware)"
+    fake_sensor_commands="$(arg fake_sensor_commands)"
+    connected_to="right_base"
+    xyz="0 0 0"
+    rpy="0 0 0"
+  />
+
+</robot>

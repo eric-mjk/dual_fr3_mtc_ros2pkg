@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Upstream helpers (once) -->
+  <xacro:include filename="$(find franka_description)/robots/common/group_definition.xacro"/>
+
+  <!-- Hand SRDF macros (once) -->
+  <xacro:include filename="$(find franka_description)/end_effectors/franka_hand/franka_hand.srdf.xacro"/>
+
+  <!--
+    Dual-arm friendly SRDF macro:
+    - unique virtual_joint name per arm (prefix-based)
+    - child_link exists in URDF: ${prefix}link0 (e.g., left_fr3_link0)
+    - parent_frame configurable (default: world)
+  -->
+  <xacro:macro name="franka_arm_srdf_dual"
+               params="arm_id
+                       hand:='true'
+                       ee_id:=franka_hand
+                       arm_prefix:=''
+                       no_prefix:='false'
+                       parent_frame:='world'">
+
+    <!-- prefix convention (matches upstream franka_description SRDF) -->
+    <xacro:property name="prefix" value="${'' if no_prefix else arm_prefix + arm_id + '_'}" />
+
+    <!-- tip link convention copied from upstream -->
+    <xacro:property name="tip_link"
+                    value="${prefix + 'hand_tcp' if hand and ee_id == 'franka_hand' else prefix + 'link8'}"/>
+
+    <!-- group_definition creates the actual MoveIt group -->
+    <xacro:group_definition prefix="${prefix}" group_name="${prefix}arm" tip_link="${tip_link}"/>
+
+    <!-- Unique virtual joint per arm -->
+    <virtual_joint name="${prefix}virtual_joint"
+                   type="fixed"
+                   parent_frame="${parent_frame}"
+                   child_link="${prefix}link0"/>
+
+    <!-- Collision disable list copied from upstream franka_arm.srdf.xacro -->
+    <disable_collisions link1="${prefix}link0" link2="${prefix}link1" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link0" link2="${prefix}link2" reason="Never"/>
+    <disable_collisions link1="${prefix}link0" link2="${prefix}link3" reason="Never"/>
+    <disable_collisions link1="${prefix}link0" link2="${prefix}link4" reason="Never"/>
+    <disable_collisions link1="${prefix}link1" link2="${prefix}link2" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link1" link2="${prefix}link3" reason="Never"/>
+    <disable_collisions link1="${prefix}link1" link2="${prefix}link4" reason="Never"/>
+    <disable_collisions link1="${prefix}link2" link2="${prefix}link3" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link2" link2="${prefix}link4" reason="Never"/>
+    <disable_collisions link1="${prefix}link2" link2="${prefix}link6" reason="Never"/>
+    <disable_collisions link1="${prefix}link3" link2="${prefix}link4" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link3" link2="${prefix}link5" reason="Never"/>
+    <disable_collisions link1="${prefix}link3" link2="${prefix}link6" reason="Never"/>
+    <disable_collisions link1="${prefix}link3" link2="${prefix}link7" reason="Never"/>
+    <disable_collisions link1="${prefix}link4" link2="${prefix}link5" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link4" link2="${prefix}link6" reason="Never"/>
+    <disable_collisions link1="${prefix}link4" link2="${prefix}link7" reason="Never"/>
+    <disable_collisions link1="${prefix}link4" link2="${prefix}link8" reason="Never"/>
+    <disable_collisions link1="${prefix}link5" link2="${prefix}link6" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link5" link2="${prefix}link7" reason="Never"/>
+    <disable_collisions link1="${prefix}link6" link2="${prefix}link7" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}link6" link2="${prefix}link8" reason="Default"/>
+    <disable_collisions link1="${prefix}link7" link2="${prefix}link8" reason="Adjacent"/>
+
+    <!-- Hand SRDF -->
+    <xacro:if value="${hand and ee_id == 'franka_hand'}">
+      <xacro:franka_hand_srdf prefix="${prefix}"/>
+    </xacro:if>
+
+  </xacro:macro>
+
+</robot>
