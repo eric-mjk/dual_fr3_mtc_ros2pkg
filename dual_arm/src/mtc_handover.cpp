@@ -47,6 +47,7 @@
 #include <moveit/task_constructor/task.h>
 #include <moveit/task_constructor/solvers.h>
 #include <moveit/task_constructor/stages.h>
+#include <moveit/task_constructor/cost_terms.h>
 #include <moveit_msgs/msg/collision_object.hpp>
 #include <shape_msgs/msg/solid_primitive.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -300,9 +301,9 @@ mtc::Task MTCTaskNode::createTask()
     // Resulting quaternion: (w=0.5, x=0.5, y=0.5, z=0.5)
     {
       Eigen::Matrix3d R;
-      R.col(0) << 0.0, 0.0, 1.0;  // EEF x → world Y
-      R.col(1) << -1.0, 0.0, 0.0;  // EEF y → world Z
-      R.col(2) << 0.0, -1.0, 0.0;  // EEF z → world X
+      R.col(0) <<  0.0,  0.0,  -1.0; 
+      R.col(1) <<  1.0,  0.0, 0.0;  
+      R.col(2) <<  0.0,  -1.0,  0.0;  
       Eigen::Quaterniond q_orient(R);
 
       geometry_msgs::msg::PoseStamped pre_pos;
@@ -355,6 +356,13 @@ mtc::Task MTCTaskNode::createTask()
         {LEFT_ARM,  sampling}});
     s->setTimeout(20.0);
     s->properties().configureInitFrom(mtc::Stage::PARENT);
+    s->properties().set("group", std::string("both_arms"));
+
+    auto clearance = std::make_shared<mtc::cost::Clearance>(
+      /*with_world=*/false,   // self-collision only (robot vs robot)
+      /*cumulative=*/false);  // penalise by minimum distance, not sum
+    s->setCostTerm(clearance);
+
     task.add(std::move(s));
   }
 
@@ -522,7 +530,7 @@ mtc::Task MTCTaskNode::createTask()
             Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()) *
             Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ());
           f.linear() = q.matrix();
-          f.translation().z() = 0.05;  // shift grasp point 4 cm up from object center
+          f.translation().z() = -0.05;  // shift grasp point 4 cm up from object center
           return f;
       };
 
@@ -536,8 +544,9 @@ mtc::Task MTCTaskNode::createTask()
       place_pose.header.frame_id = "world";
       place_pose.pose.position.x =  0.5;
       place_pose.pose.position.y = -0.2;  // left arm side
-      place_pose.pose.position.z =  0.06;
-      place_pose.pose.orientation.w = 1.0;
+      place_pose.pose.position.z =  0.175;
+      place_pose.pose.orientation.w = 0.0;
+      place_pose.pose.orientation.x = 1.0;  // 180° around X → object upside down
       gen->setPose(place_pose);
 
       auto ik = std::make_unique<mtc::stages::ComputeIK>("place IK", std::move(gen));
