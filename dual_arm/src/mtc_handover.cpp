@@ -309,7 +309,7 @@ mtc::Task MTCTaskNode::createTask()
       geometry_msgs::msg::PoseStamped pre_pos;
       pre_pos.header.frame_id       = "world";
       pre_pos.pose.position.x       = 0.3;
-      pre_pos.pose.position.y       = 0.1;
+      pre_pos.pose.position.y       = 0.0;
       pre_pos.pose.position.z       = 0.30;
       pre_pos.pose.orientation.w    = q_orient.w();
       pre_pos.pose.orientation.x    = q_orient.x();
